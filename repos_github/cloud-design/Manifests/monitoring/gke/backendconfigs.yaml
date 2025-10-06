@@ -1,0 +1,26 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: grafana-bcfg
+  namespace: monitoring
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    type: HTTP
+    requestPath: /login
+    port: 3000
+
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: prometheus-bcfg
+  namespace: monitoring
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    type: HTTP
+    requestPath: /prom/-/ready
+    port: 9090

@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-inventory-db-ingress
+  namespace: microservices
+spec:
+  podSelector:
+    matchLabels:
+      app: inventory-db
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: inventory-app
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-billing-db-ingress
+  namespace: microservices
+spec:
+  podSelector:
+    matchLabels:
+      app: billing-db
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: billing-app
+      ports:
+        - protocol: TCP
+          port: 5432
+

@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: microservices
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: nocrarii/rabbitmq:v10
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: management
+          env:
+            # For our custom image entrypoint script
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secrets
+                  key: rabbitmq-user
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secrets
+                  key: rabbitmq-password
+            # Keep defaults as well for compatibility if image switches
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secrets
+                  key: rabbitmq-user
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secrets
+                  key: rabbitmq-password
+          livenessProbe:
+            tcpSocket:
+              port: 5672
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            tcpSocket:
+              port: 5672
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - -lc
+                  - |
+                    set -eu
+                    echo "[rabbitmq] postStart: ensuring user/password/permissions"
+                    # Wait for RabbitMQ to be up enough for rabbitmqctl
+                    for i in $(seq 1 60); do
+                      if rabbitmqctl await_startup >/dev/null 2>&1; then
+                        break
+                      fi
+                      sleep 2
+                    done
+                    if rabbitmqctl list_users | awk '{print $1}' | grep -qx "${RABBITMQ_USER}"; then
+                      rabbitmqctl change_password "${RABBITMQ_USER}" "${RABBITMQ_PASSWORD}" || true
+                    else
+                      rabbitmqctl add_user "${RABBITMQ_USER}" "${RABBITMQ_PASSWORD}" || true
+                    fi
+                    rabbitmqctl set_user_tags "${RABBITMQ_USER}" administrator || true
+                    rabbitmqctl set_permissions -p / "${RABBITMQ_USER}" ".*" ".*" ".*" || true
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

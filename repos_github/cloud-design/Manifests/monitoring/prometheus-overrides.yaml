@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: k8s
+  namespace: monitoring
+spec:
+  routePrefix: /prom
+  # Ensure Prometheus picks up all ServiceMonitors/PodMonitors/Rules across namespaces
+  serviceMonitorNamespaceSelector: {}
+  serviceMonitorSelector: {}
+  podMonitorNamespaceSelector: {}
+  podMonitorSelector: {}
+  ruleNamespaceSelector: {}
+  ruleSelector: {}

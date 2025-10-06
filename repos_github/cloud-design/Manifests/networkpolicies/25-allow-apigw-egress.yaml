@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apigw-egress
+  namespace: microservices
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes: [Egress]
+  egress:
+    # Allow calls to inventory-app service
+    - to:
+        - podSelector:
+            matchLabels:
+              app: inventory-app
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow AMQP to RabbitMQ
+    - to:
+        - podSelector:
+            matchLabels:
+              app: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5672
