@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: api-gateway-pm
+  namespace: microservices
+  labels:
+    app: api-gateway
+spec:
+  namespaceSelector:
+    matchNames: ["microservices"]
+  selector:
+    matchLabels:
+      app: api-gateway
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scheme: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: inventory-app-pm
+  namespace: microservices
+  labels:
+    app: inventory-app
+spec:
+  namespaceSelector:
+    matchNames: ["microservices"]
+  selector:
+    matchLabels:
+      app: inventory-app
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scheme: http
+
