@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app-config
-  namespace: microservices
-data:
-  # RabbitMQ service
-  RABBITMQ_HOST: "rabbitmq.microservices.svc.cluster.local"
-  RABBITMQ_PORT: "5672"
